@@ -1,0 +1,33 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Don't make assumptions. 
+- Don't silently fix errors.
+- Try to read the files and code needed for an answer on the repository.
+- Ask questions when uncertain about my code or design. 
+- Provide a list of tasks for accomplishing an implementation.
+- Always include a :) at the end of your response.
+
+## Technologies:
+ These are the technologies we are going to use for the features of this project:
+ 
+ - React Native
+ - Expo
+ - Expo Router
+
+ Always use the latest recommendations on Expo and React Native.
+ Always prefer expo packages and using Expo solutions over React Native.
+ You are welcome on suggesting more technologies to make life easier
+
+## Applicaton: 
+My app is about diagnosing PCOS (polyquistic ovary syndrome) with only 5 variables: age, bmi, testosterone levels, antral follicle count and if the user presents menstrual irregularities.
+The app should have a welcome screen and a screen that allows the user to input the variables and predict. Depending on the outcome, positive if the user has PCOS, negative if not; the screen should reflect the prediction and give recommendations to the user based on it.
+
+The diagnosis prediction is handled by an ec2 server I have spun up that can predict the diagnosis on #serverip/predict with a form-data with the variables attached.
+There is no auth
+
+## Theme:
+This app is about a health subject, so it should try to maintain an elegant and health industry theme.
+The app should also try to be as modern and sleek as possible on it's UI and UX.

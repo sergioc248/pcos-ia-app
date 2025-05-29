@@ -3,6 +3,7 @@
     "name": "pcos-ia-app",
     "slug": "pcos-ia-app",
     "version": "1.0.0",
+    "scheme": "pcos-ia-app",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,6 +25,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": ["expo-router"]
   }
 }
