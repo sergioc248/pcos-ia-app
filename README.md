@@ -12,20 +12,20 @@ Desarrollar una aplicación móvil para Android que capture una foto, la envíe 
 
 1. Configuración del Backend en Ubuntu (AWS EC2)
 2. Desarrollo del API con Flask o FastAPI
-3. Desarrollo del Frontend en VsC con React Naive
+3. Desarrollo del Frontend en VsC con React Native (y Expo)
 4. Pruebas de Integración
 
 ### Backend (FastAPI)
 
 - **AWS EC2** con Ubuntu
 - **FastAPI** para el backend
-- **Modelo de Regresión Lineal** guardado con **Joblib**
+- **Modelo de Clasificación** guardado con **Joblib**
 
 ### Frontend (React Native)
 
-- **Windows 11** para el desarrollo
-- **React Native** CLI
-- **Axios** para hacer solicitudes HTTP
+- **Linux** para el desarrollo
+- **React Native**
+- **Expo**
 
 ---
 
@@ -371,20 +371,19 @@ Reemplaza `<tu_ip_ec2>` con la IP pública de tu instancia EC2. Deberías recibi
 4.  Ve a la pestaña "Body" y selecciona la opción "raw".
 5.  En el menú desplegable que aparece a la derecha (que usualmente dice "Text"), selecciona "JSON".
 6.  Pega el siguiente cuerpo JSON en el área de texto:
-    ```json
-    {
-      "age": 30,
-      "bmi": 25.0,
-      "menstrual_irregularity": 1,
-      "testosterone_level": 50.0,
-      "antral_follicle_count": 15
-    }
-    ```
-![alt text](https://github.com/sergioc248/pcos-ia-app/blob/main/images/screenshot_postman_request.png?raw=true)
+    `json
+{
+  "age": 30,
+  "bmi": 25.0,
+  "menstrual_irregularity": 1,
+  "testosterone_level": 50.0,
+  "antral_follicle_count": 15
+}
+`
+    ![alt text](https://github.com/sergioc248/pcos-ia-app/blob/main/images/screenshot_postman_request.png?raw=true)
 7.  Envía la solicitud. Deberías ver la respuesta JSON del servidor. Deberías ver algo como lo siguiente:
 
 ![alt text](https://github.com/sergioc248/pcos-ia-app/blob/main/images/screenshot_postman_answer.png?raw=true)
-
 
 La API estará disponible en `http://<tu_ip_ec2>:8000`.
 
@@ -726,89 +725,103 @@ Para conectar tu dispositivo móvil:
 - **Android**: Abre la aplicación Expo Go y escanea el código QR que aparece en la interfaz de la terminal.
 - **iOS**: Abre la aplicación Expo Go, ve a la pestaña de "Proyectos" y escanea el código QR.
 
-# 3. Despliegue Final
+# 3. Despliegue Final: Compilación Android para Pruebas con HTTP
 
-## 3.1 Revisar Configuración de Seguridad en AWS
+Para probar tu aplicación en un dispositivo Android físico, especialmente si necesitas conectarte a un servidor backend que usa HTTP (no HTTPS), puedes generar una compilación de tipo producción (APK para fácil instalación) configurada para permitir tráfico HTTP a tu servidor específico.
 
-Asegúrate de que el grupo de seguridad en AWS permita el tráfico en el puerto 8080 y que tu servidor sea accesible desde fuera de la red privada.
+## 3.1 Requisitos Previos
 
-## 3.2 Generar la App para Producción
+1.  **Instalar EAS CLI**: Si aún no lo has hecho:
+    ```bash
+    npm install -g eas-cli
+    ```
+2.  **Iniciar Sesión en Expo**:
+    ```bash
+    eas login
+    ```
+3.  **Configurar EAS en tu Proyecto**: Si es la primera vez:
 
-Si todo funciona correctamente, puedes generar la versión de producción de la app:
+    ```bash
+    eas build:configure
+    ```
 
-```bash
-npx react-native run-android --variant=release
-```
+    Asegúrate de que tu archivo `eas.json` tenga un perfil adecuado. Para este caso, vamos a asumir un perfil llamado `production` que configuraremos para generar un APK.
 
-# Si no funciona el despliegue de esa manera siga los siguientes pasos
-
-## Generando una clave
-
-Necesitará una clave de firma generada por Java, que es un archivo de almacén de claves que se utiliza para generar un binario ejecutable React Native para Android. Puede crear uno usando la herramienta de teclas en la terminal con el siguiente comando
-En Windows keytool debe ejecutarse desde C:\Program Files\Java\jdkx.x.x_x\bin, como administrador.
-
-```bash
-keytool -genkey -v -keystore your_key_name.keystore -alias your_key_alias -keyalg RSA -keysize 2048 -validity 10000
-```
-
-Este comando le solicita las contraseñas para el almacén de claves y la clave, así como los campos de nombre distintivo de su clave. Luego, genera el almacén de claves como un archivo llamado my-upload-key.keystore.
-
-El almacén de claves contiene una clave única, válida durante 10 000 días. El alias es un nombre que utilizará más adelante al firmar su aplicación, así que recuerde tomar nota del alias.
-
-## Configuración de variables
-
-1. Coloque el my-upload-key.keystorearchivo en el android/appdirectorio en la carpeta de su proyecto.
-2. Edite el archivo ~/.gradle/gradle.propertieso android/gradle.properties, y agregue lo siguiente (reemplace **\***con la contraseña del almacén de claves, el alias y la contraseña de clave correctos)
-
-```bash
-MYAPP_UPLOAD_STORE_FILE=my-upload-key.keystore
-MYAPP_UPLOAD_KEY_ALIAS=my-key-alias
-MYAPP_UPLOAD_STORE_PASSWORD=*****
-MYAPP_UPLOAD_KEY_PASSWORD=*****
-```
-
-Estas serán variables globales de Gradle, que luego podremos usar en nuestra configuración de Gradle para firmar nuestra aplicación.
-
-## Cómo agregar una configuración de firma a la configuracion
-
-El último paso de configuración que se debe realizar es configurar las compilaciones de lanzamiento para que se firmen mediante la clave de carga. Edite el archivo android/app/build.gradleen la carpeta de su proyecto y agregue la configuración de firma.
-
-```bash
-android {
-    ...
-    defaultConfig { ... }
-    signingConfigs {
-        release {
-            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
-                storeFile file(MYAPP_UPLOAD_STORE_FILE)
-                storePassword MYAPP_UPLOAD_STORE_PASSWORD
-                keyAlias MYAPP_UPLOAD_KEY_ALIAS
-                keyPassword MYAPP_UPLOAD_KEY_PASSWORD
-            }
+    ```json
+    // Ejemplo de eas.json para un APK de "producción" para pruebas
+    {
+      "build": {
+        "production": {
+          // Puedes renombrar este perfil si lo deseas, ej. "production_http_test"
+          "env": {
+            // Aquí podrías definir variables de entorno si fueran necesarias
+          },
+          "android": {
+            "buildType": "apk" // Generar un APK para fácil instalación
+          }
         }
+        // ...otros perfiles...
+      }
     }
-    buildTypes {
-        release {
-            ...
-            signingConfig signingConfigs.release
+    ```
+
+## 3.2 Permitir Tráfico HTTP Cleartext para Pruebas en Android
+
+Por defecto, Android bloquea el tráfico HTTP (no encriptado) en las compilaciones de producción por motivos de seguridad. Si experimentas errores de "Network request failed" en tu APK de producción, esto es una causa probable.
+
+La forma más sencilla y recomendada en Expo para permitir globalmente el tráfico HTTP en Android para fines de prueba es utilizando el plugin `expo-build-properties`.
+
+### Paso 3.2.1: Instalar `expo-build-properties`
+
+Si aún no lo ha hecho, instale el plugin en su proyecto:
+
+```bash
+npx expo install expo-build-properties
+```
+
+### Paso 3.2.2: Configurar `app.json`
+
+Añada o modifique la sección `plugins` en su archivo `app.json` (o `app.config.js`/`ts`) para incluir `expo-build-properties` y configurar `usesCleartextTraffic` para Android:
+
+```json
+{
+  "expo": {
+    // ... otras configuraciones ...
+    "plugins": [
+      "expo-router", // Asegúrese de mantener sus otros plugins
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+            // Aquí puede añadir otras propiedades nativas si las necesita
+          }
+          // Puede añadir configuraciones para iOS aquí si es necesario
+          // "ios": {
+          //   "flipper": true // Ejemplo
+          // }
         }
-    }
+      ]
+    ]
+    // ... resto de su app.json ...
+  }
 }
 ```
 
-## Generando la liberación
+Esta configuración le indica a EAS Build que modifique el `AndroidManifest.xml` nativo para incluir `android:usesCleartextTraffic="true"`, permitiendo así las solicitudes HTTP desde su aplicación.
 
-Ejecute el siguiente comando en una terminal:
+**Importante:**
+
+- **Alcance Global**: `usesCleartextTraffic: true` permite el tráfico HTTP a **cualquier** dominio. Esto es conveniente para pruebas pero menos seguro que especificar dominios permitidos individualmente.
+- **Solo para Pruebas**: Utilice esta configuración principalmente para desarrollo y pruebas con backends que controla y que aún no usan HTTPS.
+- **Seguridad en Producción**: **Para una aplicación de producción real, siempre debe configurar su servidor para que use HTTPS.**
+
+## 3.3 Generar la Compilación APK (Perfil `production`)
+
+Con la configuración de `usesCleartextTraffic` aplicada en su `app.json` mediante `expo-build-properties`, proceda a generar su APK. Asumiendo que está probando con un perfil llamado `production` en su `eas.json` (configurado para generar un APK como se mostró en el ejemplo de `eas.json` anteriormente), ejecute:
 
 ```bash
-npx react-native build-android --mode=release
-
+eas build -p android --profile production
 ```
 
-Este comando utiliza bundleReleaseel componente interno de Gradle que agrupa todo el JavaScript necesario para ejecutar su aplicación en el AAB ( Android App Bundle ). Si necesita cambiar la forma en que se agrupan el paquete de JavaScript o los recursos dibujables (por ejemplo, si cambió los nombres de archivo/carpeta predeterminados o la estructura general del proyecto), consulte para android/app/build.gradlever cómo puede actualizarlo para reflejar estos cambios.
-
-## Probar la versión de lanzamiento de su aplicación
-
-```bash
-npm run android -- --mode="release"
-```
+Una vez que la compilación finalice, EAS CLI te proporcionará un enlace para descargar el archivo `.apk`. Instala este APK en tu dispositivo Android.
